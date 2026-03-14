@@ -1,15 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper,
-  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, FormControl, InputLabel, Select, MenuItem, Divider
+  InputAdornment, Chip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import CloseIcon from '@mui/icons-material/Close';
 import patientService from '../../../service/patientService';
 import { Alert } from 'antd';
 import { useRouter } from 'next/navigation';
@@ -38,123 +36,6 @@ const calculateAge = (birthDate) => {
   return age;
 };
 
-// Шинэ өвчтөн бүртгэх modal form
-const RegisterPatientModal = ({ open, onClose, onRegistered }) => {
-  const [form, setForm] = useState({
-    lastname: '', firstname: '', register: '',
-    gender: '', birthOfDate: '', phone: '',
-    email: '', password: '', type: '', school: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
-  };
-
-  const handleSubmit = async () => {
-    if (!form.lastname || !form.firstname || !form.register || !form.password) {
-      setError('Овог, нэр, регистр, нууц үг заавал оруулна уу');
-      return;
-    }
-    setLoading(true);
-    try {
-      const result = await patientService.createPatient(form);
-      const newPatient = result.user || result.data || result;
-      onRegistered(newPatient);
-      onClose();
-      setForm({
-        lastname: '', firstname: '', register: '',
-        gender: '', birthOfDate: '', phone: '',
-        email: '', password: '', type: '', school: ''
-      });
-    } catch (err) {
-      setError(err.error || err.message || 'Бүртгэлд алдаа гарлаа');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: '12px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" fontWeight={600}>Шинэ өвчтөн бүртгэх</Typography>
-        <Button onClick={onClose} sx={{ minWidth: 0 }}><CloseIcon /></Button>
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{ pt: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Овог *" name="lastname"
-              value={form.lastname} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Нэр *" name="firstname"
-              value={form.firstname} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Регистр *" name="register"
-              value={form.register} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Хүйс</InputLabel>
-              <Select name="gender" value={form.gender} onChange={handleChange} label="Хүйс">
-                <MenuItem value="male">Эрэгтэй</MenuItem>
-                <MenuItem value="female">Эмэгтэй</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Төрсөн огноо" name="birthOfDate"
-              type="date" value={form.birthOfDate} onChange={handleChange}
-              size="small" InputLabelProps={{ shrink: true }} />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Утас" name="phone"
-              value={form.phone} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Цахим шуудан" name="email"
-              value={form.email} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Нууц үг *" name="password"
-              type="password" value={form.password} onChange={handleChange} size="small" />
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Төрөл</InputLabel>
-              <Select name="type" value={form.type} onChange={handleChange} label="Төрөл">
-                <MenuItem value="Student">Оюутан</MenuItem>
-                <MenuItem value="Teacher">Багш</MenuItem>
-                <MenuItem value="Staff">Ажилтан</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <TextField fullWidth label="Сургууль" name="school"
-              value={form.school} onChange={handleChange} size="small" />
-          </Grid>
-        </Grid>
-        {error && (
-          <Typography color="error" variant="body2" sx={{ mt: 1 }}>{error}</Typography>
-        )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} variant="outlined"
-          sx={{ borderRadius: '8px', textTransform: 'none', px: 3 }}>Болих</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={loading}
-          sx={{ borderRadius: '8px', textTransform: 'none', px: 3 }}>
-          {loading ? 'Бүртгэж байна...' : 'Бүртгэх & Сонгох'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
 export default function CreateExaminationPage() {
   const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
@@ -166,7 +47,6 @@ export default function CreateExaminationPage() {
   const [loadingVitals, setLoadingVitals] = useState(false);
   const [notification, setNotification] = useState(null);
   const [ongoingPatientIds, setOngoingPatientIds] = useState(new Set());
-  const [openRegisterModal, setOpenRegisterModal] = useState(false);
 
   const [formData, setFormData] = useState({
     patientId: '', patientName: '', date: new Date(), type: 'Анхан',
@@ -179,36 +59,35 @@ export default function CreateExaminationPage() {
     left_systolic: '', left_diastolic: '', left_mean_arterial_pressure: '', left_note: ''
   });
 
-  const fetchPatients = useCallback(async () => {
-    try {
-      const userStr = localStorage.getItem('USER');
-      const token = userStr ? JSON.parse(userStr).token : null;
-
-      const [patientData, examRes] = await Promise.all([
-        patientService.getAllPatients(),
-        token
-          ? fetch(`${API_URL}/examination/doctor/my-examinations`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            }).then(r => r.json())
-          : Promise.resolve({ data: [] })
-      ]);
-
-      const ongoingIds = new Set(
-        (examRes.data || [])
-          .filter(exam => exam.status === 'Ongoing')
-          .map(exam => exam.patient?._id || exam.patient)
-      );
-
-      setOngoingPatientIds(ongoingIds);
-      setPatients(patientData.patients || []);
-    } catch (error) {
-      console.error('Пациентууд татахад алдаа:', error);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const userStr = localStorage.getItem('USER');
+        const token = userStr ? JSON.parse(userStr).token : null;
+
+        const [patientData, examRes] = await Promise.all([
+          patientService.getAllPatients(),
+          token
+            ? fetch(`${API_URL}/examination/doctor/my-examinations`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              }).then(r => r.json())
+            : Promise.resolve({ data: [] })
+        ]);
+
+        const ongoingIds = new Set(
+          (examRes.data || [])
+            .filter(exam => exam.status === 'Ongoing')
+            .map(exam => exam.patient?._id || exam.patient)
+        );
+
+        setOngoingPatientIds(ongoingIds);
+        setPatients(patientData.patients || []);
+      } catch (error) {
+        console.error('Пациентууд татахад алдаа:', error);
+      }
+    };
     fetchPatients();
-  }, [fetchPatients]);
+  }, []);
 
   const showNotification = (message, severity = 'success') => {
     setNotification({ message, severity });
@@ -281,7 +160,6 @@ export default function CreateExaminationPage() {
     }));
   };
 
-  // Өвчтөн сонгох функц
   const handleSelectPatient = async (patient) => {
     const translatedType = {
       Teacher: 'Багш', Student: 'Оюутан', Staff: 'Ажилтан',
@@ -313,13 +191,6 @@ export default function CreateExaminationPage() {
     } catch (err) {
       showNotification('Пациентын мэдээлэл татаж чадсангүй', 'error');
     }
-  };
-
-  // Шинэ өвчтөн бүртгэсний дараа автоматаар сонгох
-  const handlePatientRegistered = async (newPatient) => {
-    await fetchPatients(); // жагсаалтыг шинэчлэх
-    showNotification('Өвчтөн амжилттай бүртгэгдлээ, үзлэгт нэмэгдлээ!');
-    await handleSelectPatient(newPatient); // шууд сонгох
   };
 
   const handleUpdateAllergies = async (updatedAllergies) => {
@@ -481,7 +352,7 @@ export default function CreateExaminationPage() {
               <Button
                 variant="contained"
                 startIcon={<PersonAddAltIcon />}
-                onClick={() => setOpenRegisterModal(true)}
+                onClick={() => router.push('/customer/register?returnTo=/examination/newExamination')}
                 sx={{ borderRadius: '8px', textTransform: 'none', px: 3 }}
               >
                 Өвчтөн бүртгэх
@@ -606,35 +477,11 @@ export default function CreateExaminationPage() {
               {tabValue === 2 && <TreatmentTab formData={formData} onChange={handleChange} />}
               {tabValue === 3 && <PrescriptionTab formData={formData} onChange={handleChange} />}
 
-              {/* Хадгалах товч баруун доор */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, pb: 3 }}>
-                <Button
-                  onClick={handleBack}
-                  variant="outlined"
-                  sx={{ borderRadius: '8px', textTransform: 'none', px: 4, mr: 2 }}
-                >
-                  Болих
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading}
-                  sx={{ borderRadius: '8px', textTransform: 'none', px: 4 }}
-                >
-                  {loading ? 'Хадгалж байна...' : 'Хадгалах'}
-                </Button>
-              </Box>
+              <ActionButtons onCancel={handleBack} loading={loading} />
             </Box>
           </>
         )}
       </Box>
-
-      {/* Шинэ өвчтөн бүртгэх modal */}
-      <RegisterPatientModal
-        open={openRegisterModal}
-        onClose={() => setOpenRegisterModal(false)}
-        onRegistered={handlePatientRegistered}
-      />
 
       {notification && (
         <Box sx={{

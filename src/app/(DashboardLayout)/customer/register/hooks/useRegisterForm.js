@@ -66,8 +66,17 @@ export function useRegisterForm() {
   }, [formData, register])
 
   const goToCustomer    = useCallback(() => router.push('/customer'),    [router])
-  const goToExamination = useCallback(() => router.push('/examination'), [router])
-  const goBack          = useCallback(() => router.push('/customer'),    [router])
+    const goToExamination = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    const returnTo = params.get('returnTo')
+    router.push(returnTo || '/examination')
+    }, [router])
+
+    const goBack = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    const returnTo = params.get('returnTo')
+    router.push(returnTo || '/customer')
+    }, [router])
 
   return {
     formData,
