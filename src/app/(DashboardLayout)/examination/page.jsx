@@ -19,6 +19,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import { useRouter } from 'next/navigation';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 export default function ExaminationPage() {
   const [examinations, setExaminations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function ExaminationPage() {
         const token = JSON.parse(userStr).token;
         if (!token) return;
 
-        const res = await fetch('http://localhost:8000/api/examination/doctor/my-examinations', {
+        const res = await fetch(`${API_URL}/examination/doctor/my-examinations`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -85,7 +87,7 @@ export default function ExaminationPage() {
     handleCloseMenu();
     try {
       const token = JSON.parse(localStorage.getItem('USER')).token;
-      const res = await fetch(`http://localhost:8000/api/examination/${selectedExam.id}`, {
+      const res = await fetch(`${API_URL}/examination/${selectedExam.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -124,7 +126,7 @@ export default function ExaminationPage() {
       const typeMap = { 'Анхан': 'Initial', 'Давтан': 'Follow-up' };
       const statusMap = { 'Дууссан': 'Done', 'Хийгдэж буй': 'Ongoing' };
 
-      const res = await fetch(`http://localhost:8000/api/examination/${editFormData.id}`, {
+      const res = await fetch(`${API_URL}/examination/${editFormData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +172,7 @@ export default function ExaminationPage() {
     try {
       const token = JSON.parse(localStorage.getItem('USER')).token;
 
-      const res = await fetch(`http://localhost:8000/api/examination/${selectedExam.id}`, {
+      const res = await fetch(`${API_URL}/examination/${selectedExam.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -178,7 +180,6 @@ export default function ExaminationPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Устгахад алдаа гарлаа');
 
-      // Local state-аас устгах
       setExaminations((prev) => prev.filter((exam) => exam.id !== selectedExam.id));
       setOpenDeleteConfirm(false);
     } catch (err) {
@@ -328,7 +329,6 @@ export default function ExaminationPage() {
           <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" size="small" />
         </Box>
 
-        {/* Menu */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -349,7 +349,6 @@ export default function ExaminationPage() {
           </MenuItem>
         </Menu>
 
-        {/* Edit Dialog */}
         <Dialog
           open={openEditDialog}
           onClose={() => setOpenEditDialog(false)}
@@ -365,15 +364,12 @@ export default function ExaminationPage() {
           <Divider />
           <DialogContent sx={{ pt: 3 }}>
             <Stack spacing={2}>
-              {/* Өвчтөний мэдээлэл (зөвхөн харах) */}
               <Box sx={{ bgcolor: '#f5f5f5', borderRadius: '8px', px: 2, py: 1.5 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Өвчтөн</Typography>
                 <Typography fontWeight={500}>
                   {editFormData.lastName} {editFormData.firstName}
                 </Typography>
               </Box>
-
-              {/* Үзлэгийн өдөр, төрөл, төлөв */}
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   fullWidth label="Үзлэгийн өдөр" name="date" type="date"
@@ -405,8 +401,6 @@ export default function ExaminationPage() {
                   </Select>
                 </FormControl>
               </Box>
-
-              {/* Үзлэгийн шалтгаан */}
               <TextField
                 fullWidth label="Үзлэгийн шалтгаан" name="reason"
                 value={editFormData.reason} onChange={handleEditChange}
@@ -422,7 +416,6 @@ export default function ExaminationPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Delete Confirm Dialog */}
         <Dialog
           open={openDeleteConfirm}
           onClose={cancelDelete}

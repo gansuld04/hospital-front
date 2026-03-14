@@ -24,6 +24,8 @@ import PrescriptionTab from '../../components/examination/Prescription';
 import ActionButtons from '../../components/examination/ActionButtons';
 import PatientMedicalHistory from '../../components/examination/MedicalHistory';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 const calculateAge = (birthDate) => {
   if (!birthDate) return '';
   const birth = new Date(birthDate);
@@ -63,17 +65,15 @@ export default function CreateExaminationPage() {
         const userStr = localStorage.getItem('USER');
         const token = userStr ? JSON.parse(userStr).token : null;
 
-        // Өвчтөнүүд болон "Хийгдэж буй" үзлэгүүдийг зэрэгцүүлэн татах
         const [patientData, examRes] = await Promise.all([
           patientService.getAllPatients(),
           token
-            ? fetch('http://localhost:8000/api/examination/doctor/my-examinations', {
+            ? fetch(`${API_URL}/examination/doctor/my-examinations`, {
                 headers: { 'Authorization': `Bearer ${token}` }
               }).then(r => r.json())
             : Promise.resolve({ data: [] })
         ]);
 
-        // "Хийгдэж буй" үзлэгтэй өвчтөний ID-г цуглуулах
         const ongoingIds = new Set(
           (examRes.data || [])
             .filter(exam => exam.status === 'Ongoing')
@@ -122,7 +122,7 @@ export default function CreateExaminationPage() {
     }
     try {
       showNotification(`${side === 'right' ? 'Баруун' : 'Зүүн'} даралтыг хэмжиж байна...`, 'info');
-      const response = await fetch('http://localhost:8000/api/vital/vitalsigns/latest', {
+      const response = await fetch(`${API_URL}/vital/vitalsigns/latest`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
       if (!response.ok) throw new Error('Failed to fetch vitals');
@@ -258,7 +258,7 @@ export default function CreateExaminationPage() {
 
     try {
       // 1. Үзлэг үүсгэх
-      const examRes = await fetch('http://localhost:8000/api/examination', {
+      const examRes = await fetch(`${API_URL}/examination`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -283,7 +283,7 @@ export default function CreateExaminationPage() {
 
       if (hasVitals) {
         const toNum = (v) => (v !== '' && v != null) ? parseFloat(v) : undefined;
-        const vitalsRes = await fetch('http://localhost:8000/api/vital/vitalsigns', {
+        const vitalsRes = await fetch(`${API_URL}/vital/vitalsigns`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -311,7 +311,7 @@ export default function CreateExaminationPage() {
 
       // 3. Онош
       if (formData.diagnosisCode) {
-        const diagRes = await fetch('http://localhost:8000/api/diagnosis/diagnosis', {
+        const diagRes = await fetch(`${API_URL}/diagnosis/diagnosis`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -332,10 +332,9 @@ export default function CreateExaminationPage() {
     }
   };
 
-  // Хийгдэж буй үзлэгтэй өвчтөнүүдийг хасаж, хайлтаар шүүнэ
   const filteredPatients = patients.filter(patient => {
     const id = patient.id || patient._id;
-    if (ongoingPatientIds.has(id)) return false; // Хийгдэж буй үзлэгтэй бол харуулахгүй
+    if (ongoingPatientIds.has(id)) return false;
     const fullName = `${patient.lastname || ''} ${patient.firstname || ''}`.toLowerCase();
     const regNum = (patient.register || '').toLowerCase();
     return fullName.includes(patientSearch.toLowerCase()) || regNum.includes(patientSearch.toLowerCase());
@@ -346,24 +345,20 @@ export default function CreateExaminationPage() {
       <Header onBack={handleBack} />
 
       <Box component="form" onSubmit={handleSubmit}>
-
-        {/* ── Өвчтөн сонгоогүй үед: жагсаалт харуулах ── */}
         {!selectedPatient ? (
           <Box sx={{ mt: 2 }}>
-            {/* Гарчиг + бүртгэх товч */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" fontWeight={600}>Үйлчлүүлэгч сонгох</Typography>
               <Button
                 variant="contained"
                 startIcon={<PersonAddAltIcon />}
-                onClick={() => router.push('http://localhost:3000/customer/customerRegister')}
+                onClick={() => router.push('/customer/register')}
                 sx={{ borderRadius: '8px', textTransform: 'none', px: 3 }}
               >
                 Өвчтөн бүртгэх
               </Button>
             </Box>
 
-            {/* Хайлтын талбар */}
             <TextField
               fullWidth
               placeholder="Овог, нэр эсвэл регистрийн дугаараар хайх..."
@@ -380,7 +375,6 @@ export default function CreateExaminationPage() {
               }}
             />
 
-            {/* Өвчтөний жагсаалт */}
             <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #eee', borderRadius: '12px' }}>
               <Table>
                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
@@ -436,7 +430,6 @@ export default function CreateExaminationPage() {
             </TableContainer>
           </Box>
         ) : (
-          /* ── Өвчтөн сонгосон үед: мэдээлэл + форм ── */
           <>
             <PatientInfo
               patient={selectedPatient}
@@ -490,7 +483,6 @@ export default function CreateExaminationPage() {
         )}
       </Box>
 
-      {/* Notification */}
       {notification && (
         <Box sx={{
           position: 'fixed', bottom: 16, left: '50%',
