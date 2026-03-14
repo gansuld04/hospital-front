@@ -1,5 +1,6 @@
 "use client";
 import { styled, Container, Box, CircularProgress, Typography } from "@mui/material";
+import { WebVitalsReporter } from './WebVitalsReporter'
 import React, { useState, useEffect } from "react";
 import Header from "@/app/(DashboardLayout)/layout/header/Header";
 import Sidebar from "@/app/(DashboardLayout)/layout/sidebar/Sidebar";
@@ -240,6 +241,7 @@ function LayoutContent({ children }) {
     // For protected routes, show the dashboard layout
     return (
       <MainWrapper className="mainwrapper">
+        <WebVitalsReporter /> 
         {/* Sidebar */}
         <Sidebar
           isSidebarOpen={isSidebarOpen}
